@@ -2,7 +2,7 @@
 
 import useSWR from "swr"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SiteHeader } from "@/components/site-header"
+
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -11,7 +11,6 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <SiteHeader />
       <main className="flex-1 px-6 py-8 space-y-6 max-w-4xl mx-auto">
       <Card>
         <CardHeader>

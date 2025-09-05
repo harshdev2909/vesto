@@ -11,10 +11,9 @@ import { User } from "lucide-react"
 
 const nav = [
   { href: "/", label: "Home" },
-  { href: "/dashboard", label: "Dashboard" },
   { href: "/history", label: "History" },
   { href: "/profile", label: "Profile" },
-  { href: "/admin", label: "Admin" },
+  
   { href: "/about", label: "About" },
 ]
 

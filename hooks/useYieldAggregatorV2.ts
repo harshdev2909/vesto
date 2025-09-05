@@ -6,7 +6,7 @@ import { readContract } from '@wagmi/core'
 import { parseUnits, formatUnits } from 'viem'
 import { useToast } from './use-toast'
 import { useAppStore } from '@/store/use-app-store'
-import { useSaveTransactionHistory, useCreateNotification } from './useOnChainData'
+import { useSaveTransactionHistory, useCreateNotification, useUpdateTransactionStatus, useUpdateNotificationByTransactionHash } from './useOnChainData'
 import { config } from '@/lib/wagmi'
 import { 
   yieldRouter, 
@@ -24,6 +24,7 @@ export function useYieldAggregatorV2() {
   // Mutation hooks
   const saveTransactionHistory = useSaveTransactionHistory()
   const createNotification = useCreateNotification()
+  const updateTransactionStatusDB = useUpdateTransactionStatus()
   
   // Transaction states
   const [isApproving, setIsApproving] = useState(false)
@@ -36,6 +37,11 @@ export function useYieldAggregatorV2() {
   const [depositTxHash, setDepositTxHash] = useState<string | null>(null)
   const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null)
   const [rebalanceTxHash, setRebalanceTxHash] = useState<string | null>(null)
+  
+  // Flags to prevent duplicate processing
+  const [processedDeposits, setProcessedDeposits] = useState<Set<string>>(new Set())
+  const [processedWithdrawals, setProcessedWithdrawals] = useState<Set<string>>(new Set())
+  const [processedRebalances, setProcessedRebalances] = useState<Set<string>>(new Set())
   
   // Pending transaction data
   const [pendingDeposit, setPendingDeposit] = useState<{
@@ -98,19 +104,30 @@ export function useYieldAggregatorV2() {
 
   // Handle successful deposit transactions
   React.useEffect(() => {
-    if (isDepositSuccess && depositReceipt && depositTxHash && address) {
+    if (isDepositSuccess && depositReceipt && depositTxHash && address && !processedDeposits.has(depositTxHash)) {
       console.log('✅ Deposit transaction confirmed')
       updateTransactionStatus(depositTxHash, 'confirmed')
       
-      // Save to transaction history
-      saveTransactionHistory.mutate({
-        walletAddress: address,
-        type: 'deposit',
-        assetAddress: pendingDeposit?.assetAddress,
-        amount: pendingDeposit?.amount ? Number(pendingDeposit.amount) : 0,
+      // Mark as processed to prevent duplicates
+      setProcessedDeposits(prev => new Set(prev).add(depositTxHash))
+      
+      // Update transaction status in database
+      console.log('💾 Updating deposit transaction status:', {
         transactionHash: depositTxHash,
-        blockNumber: Number(depositReceipt.blockNumber),
-        gasUsed: Number(depositReceipt.gasUsed)
+        walletAddress: address,
+        updates: {
+          blockNumber: Number(depositReceipt.blockNumber),
+          gasUsed: Number(depositReceipt.gasUsed)
+        }
+      })
+      
+      updateTransactionStatusDB.mutate({
+        transactionHash: depositTxHash,
+        walletAddress: address,
+        updates: {
+          blockNumber: Number(depositReceipt.blockNumber),
+          gasUsed: Number(depositReceipt.gasUsed)
+        }
       })
       
       toast({ 
@@ -132,23 +149,34 @@ export function useYieldAggregatorV2() {
         setPendingDeposit(null)
       }, 5000)
     }
-  }, [isDepositSuccess, depositReceipt, depositTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification])
+  }, [isDepositSuccess, depositReceipt, depositTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedDeposits])
 
   // Handle successful withdrawal transactions
   React.useEffect(() => {
-    if (isWithdrawSuccess && withdrawReceipt && withdrawTxHash && address) {
+    if (isWithdrawSuccess && withdrawReceipt && withdrawTxHash && address && !processedWithdrawals.has(withdrawTxHash)) {
       console.log('✅ Withdrawal transaction confirmed')
       updateTransactionStatus(withdrawTxHash, 'confirmed')
       
-      // Save to transaction history
-      saveTransactionHistory.mutate({
-        walletAddress: address,
-        type: 'withdraw',
-        assetAddress: pendingWithdrawal?.assetAddress,
-        amount: pendingWithdrawal?.amount ? Number(pendingWithdrawal.amount) : 0,
+      // Mark as processed to prevent duplicates
+      setProcessedWithdrawals(prev => new Set(prev).add(withdrawTxHash))
+      
+      // Update transaction status in database
+      console.log('💾 Updating withdrawal transaction status:', {
         transactionHash: withdrawTxHash,
-        blockNumber: Number(withdrawReceipt.blockNumber),
-        gasUsed: Number(withdrawReceipt.gasUsed)
+        walletAddress: address,
+        updates: {
+          blockNumber: Number(withdrawReceipt.blockNumber),
+          gasUsed: Number(withdrawReceipt.gasUsed)
+        }
+      })
+      
+      updateTransactionStatusDB.mutate({
+        transactionHash: withdrawTxHash,
+        walletAddress: address,
+        updates: {
+          blockNumber: Number(withdrawReceipt.blockNumber),
+          gasUsed: Number(withdrawReceipt.gasUsed)
+        }
       })
       
       toast({ 
@@ -170,13 +198,16 @@ export function useYieldAggregatorV2() {
         setPendingWithdrawal(null)
       }, 5000)
     }
-  }, [isWithdrawSuccess, withdrawReceipt, withdrawTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification])
+  }, [isWithdrawSuccess, withdrawReceipt, withdrawTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedWithdrawals, pendingWithdrawal])
 
   // Handle successful rebalance transactions
   React.useEffect(() => {
-    if (isRebalanceSuccess && rebalanceReceipt && rebalanceTxHash && address) {
+    if (isRebalanceSuccess && rebalanceReceipt && rebalanceTxHash && address && !processedRebalances.has(rebalanceTxHash)) {
       console.log('✅ Rebalance transaction confirmed')
       updateTransactionStatus(rebalanceTxHash, 'confirmed')
+      
+      // Mark as processed to prevent duplicates
+      setProcessedRebalances(prev => new Set(prev).add(rebalanceTxHash))
       
       // Save to transaction history
       saveTransactionHistory.mutate({
@@ -205,7 +236,7 @@ export function useYieldAggregatorV2() {
         setRebalanceTxHash(null)
       }, 5000)
     }
-  }, [isRebalanceSuccess, rebalanceReceipt, rebalanceTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification])
+  }, [isRebalanceSuccess, rebalanceReceipt, rebalanceTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedRebalances])
 
   // Approve token function
   const approveToken = useCallback(async (tokenAddress: string, amount: bigint) => {
@@ -276,6 +307,37 @@ export function useYieldAggregatorV2() {
         amount: amount.toString(),
         transactionHash: hash
       })
+      
+      // Save transaction to database immediately with pending status
+      try {
+        await saveTransactionHistory.mutateAsync({
+          walletAddress: address,
+          type: 'deposit',
+          assetAddress: tokenAddress,
+          amount: Number(amount) / 1e6, // Convert from 6 decimals to actual USDC amount
+          transactionHash: hash,
+          blockNumber: 0, // Will be updated when confirmed
+          gasUsed: 0, // Will be updated when confirmed
+          protocolAddress: undefined, // Will be updated when confirmed
+          oldAPY: undefined,
+          newAPY: undefined
+        })
+        console.log('💾 Deposit transaction saved to database with pending status')
+      } catch (error) {
+        console.error('❌ Failed to save deposit transaction to database:', error)
+      }
+      
+      // Create immediate notification for deposit sent
+      try {
+        createNotification.mutate({
+          walletAddress: address,
+          message: `Deposit of ${(Number(amount) / 1e6).toFixed(2)} USDC sent. Transaction: ${hash.slice(0, 10)}...`,
+          type: "info"
+        })
+        console.log('📢 Deposit sent notification created')
+      } catch (error) {
+        console.error('❌ Failed to create deposit sent notification:', error)
+      }
       
       toast({ title: "Deposit sent!", description: `Transaction hash: ${hash.slice(0, 10)}...` })
       return true
@@ -375,6 +437,37 @@ export function useYieldAggregatorV2() {
         amount: usdcAmount.toString(),
         transactionHash: hash
       })
+      
+      // Save transaction to database immediately with pending status
+      try {
+        await saveTransactionHistory.mutateAsync({
+          walletAddress: address,
+          type: 'withdraw',
+          assetAddress: tokenAddress,
+          amount: Number(usdcAmount) / 1e6, // Convert from 6 decimals to actual USDC amount
+          transactionHash: hash,
+          blockNumber: 0, // Will be updated when confirmed
+          gasUsed: 0, // Will be updated when confirmed
+          protocolAddress: undefined, // Will be updated when confirmed
+          oldAPY: undefined,
+          newAPY: undefined
+        })
+        console.log('💾 Withdrawal transaction saved to database with pending status')
+      } catch (error) {
+        console.error('❌ Failed to save withdrawal transaction to database:', error)
+      }
+      
+      // Create immediate notification for withdrawal sent
+      try {
+        createNotification.mutate({
+          walletAddress: address,
+          message: `Withdrawal of ${(Number(usdcAmount) / 1e6).toFixed(2)} USDC sent. Transaction: ${hash.slice(0, 10)}...`,
+          type: "info"
+        })
+        console.log('📢 Withdrawal sent notification created')
+      } catch (error) {
+        console.error('❌ Failed to create withdrawal sent notification:', error)
+      }
       
       toast({ title: "Withdrawal sent!", description: `Transaction hash: ${hash.slice(0, 10)}...` })
       return true

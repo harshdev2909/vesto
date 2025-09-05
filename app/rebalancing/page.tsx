@@ -8,7 +8,7 @@ import { useMockPortfolio } from "@/hooks/useBackendData"
 import { useRebalancing } from "@/hooks/useRebalancing"
 import { useWallet } from "@/hooks/useWallet"
 import { useAssets } from "@/hooks/useBackendData"
-import { SiteHeader } from "@/components/site-header"
+
 import { useToast } from "@/hooks/use-toast"
 import { AlertCircle, TrendingUp, Clock, Zap, RefreshCw } from "lucide-react"
 import Link from "next/link"
@@ -74,7 +74,6 @@ export default function RebalancingPage() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <SiteHeader />
       <main className="flex-1 px-6 py-8 space-y-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between">

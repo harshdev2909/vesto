@@ -153,6 +153,13 @@ export async function GET(request: NextRequest) {
     console.log('Current protocol from contract:', currentProtocol)
     console.log('Available protocols:', yieldComparisons.map((c: any) => c.protocol))
     
+    // Log the protocol address for debugging
+    if (currentProtocol === '0x0000000000000000000000000000000000000000') {
+      console.log('⚠️ Current protocol is zero address - using fallback')
+    } else {
+      console.log('✅ Current protocol is valid:', currentProtocol)
+    }
+    
     const currentProtocolData = yieldComparisons.find((comp: any) => 
       comp.protocol.toLowerCase() === currentProtocol.toLowerCase()
     )
@@ -160,10 +167,11 @@ export async function GET(request: NextRequest) {
     // If no current protocol data found, use the first protocol as default
     const defaultProtocolData = yieldComparisons.length > 0 ? yieldComparisons[0] : null
     
-    // If current protocol is zero address or not found, use the best protocol
+    // Only use fallback if current protocol is truly zero address, not just missing from comparisons
     const isZeroAddress = currentProtocol === '0x0000000000000000000000000000000000000000' || 
-                         currentProtocol === '0x00000000000000000000000000000000017d7840' ||
-                         !currentProtocolData
+                         currentProtocol === '0x00000000000000000000000000000000017d7840'
+    
+    // Use current protocol if it exists, otherwise use the first available protocol
     const effectiveProtocol = isZeroAddress 
       ? (defaultProtocolData ? defaultProtocolData.protocol : '0x0000000000000000000000000000000000000000')
       : currentProtocol
@@ -222,13 +230,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get current APY in basis points - use 1e12 multiplier based on testing
-    const currentAPY = currentProtocolData ? Number(currentProtocolData.apy) / 1e12 : 
-                      (defaultProtocolData ? Number(defaultProtocolData.apy) / 1e12 : 0)
+    // Get current APY - use effective protocol data
+    const effectiveProtocolData = yieldComparisons.find((comp: any) => 
+      comp.protocol.toLowerCase() === effectiveProtocol.toLowerCase()
+    ) || defaultProtocolData
+    
+    // APY is stored with 1e15 multiplier (4500000000000000 = 4.5%)
+    const currentAPY = effectiveProtocolData ? Number(effectiveProtocolData.apy) / 1e15 : 0
 
-    // Get protocol name
-    const currentProtocolName = PROTOCOL_NAMES[currentProtocol] || 
-                               (currentProtocolData ? currentProtocolData.protocolName : 
+    // Get protocol name using effective protocol
+    const currentProtocolName = PROTOCOL_NAMES[effectiveProtocol] || 
+                               (effectiveProtocolData ? effectiveProtocolData.protocolName : 
                                 (defaultProtocolData ? defaultProtocolData.protocolName : 'No Protocol'))
 
     // Format amounts - handle large numbers properly
@@ -255,7 +267,7 @@ export async function GET(request: NextRequest) {
         protocol: effectiveProtocol,
         protocolName: currentProtocolName,
         apy: currentAPY,
-        apyPercentage: currentAPY / 100 // Convert basis points to percentage
+        apyPercentage: currentAPY // APY is already in percentage format
       },
       userPosition: {
         shares: userShares.toString(),
@@ -276,8 +288,8 @@ export async function GET(request: NextRequest) {
       allProtocols: yieldComparisons.map((comp: any) => ({
         protocol: comp.protocol,
         protocolName: PROTOCOL_NAMES[comp.protocol] || comp.protocolName,
-        apy: Number(comp.apy) / 1e12, // Use 1e12 multiplier
-        apyPercentage: (Number(comp.apy) / 1e12) / 100, // Use 1e12 multiplier
+        apy: Number(comp.apy) / 1e15, // APY is stored with 1e15 multiplier (4500000000000000 = 4.5%)
+        apyPercentage: Number(comp.apy) / 1e15, // APY is stored with 1e15 multiplier (4500000000000000 = 4.5%)
         totalValueLocked: comp.totalValueLocked.toString()
       }))
     }

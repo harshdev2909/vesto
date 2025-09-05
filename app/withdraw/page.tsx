@@ -11,7 +11,7 @@ import { useWallet } from "@/hooks/useWallet"
 import { useYieldAggregator } from "@/hooks/useYieldAggregator"
 import { useAYRTBalance } from "@/hooks/useAYRTBalance"
 import { useUserTransactions } from "@/hooks/useUserTransactions"
-import { SiteHeader } from "@/components/site-header"
+
 import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
@@ -174,7 +174,6 @@ export default function WithdrawPage() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <SiteHeader />
       <main className="flex-1 px-6 py-8 space-y-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4">

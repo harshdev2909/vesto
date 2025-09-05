@@ -92,6 +92,7 @@ export interface Notification {
   message: string
   type: 'info' | 'success' | 'warning' | 'error'
   data?: any
+  transactionHash?: string
   timestamp: Date
   read: boolean
   createdAt: Date

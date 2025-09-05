@@ -1,4 +1,4 @@
-import { SiteHeader } from "@/components/site-header"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Shield, Zap, TrendingUp, Users, Globe } from "lucide-react"
@@ -6,7 +6,6 @@ import { ArrowRight, Shield, Zap, TrendingUp, Users, Globe } from "lucide-react"
 export default function AboutPage() {
   return (
     <div className="min-h-dvh flex flex-col">
-      <SiteHeader />
       <main className="flex-1 px-6 py-10 max-w-4xl mx-auto space-y-8">
         {/* Hero Section */}
         <div className="text-center space-y-4">

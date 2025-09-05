@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ArbiscanButton } from '@/components/arbiscan-button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, History, TrendingUp, TrendingDown, RotateCcw, Wallet, AlertCircle } from 'lucide-react'
 import { useTransactionHistory } from '@/hooks/useOnChainData'
@@ -146,7 +147,7 @@ export default function HistoryPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {historyEntries.map((entry) => (
+                {historyEntries.map((entry: any) => (
                   <div
                     key={entry._id}
                     className={`p-4 border rounded-lg ${getTransactionColor(entry.type)}`}
@@ -173,14 +174,21 @@ export default function HistoryPage() {
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-2">
                         <p className="text-sm text-muted-foreground">
                           {formatDistanceToNow(new Date(entry.timestamp), { addSuffix: true })}
                         </p>
                         {entry.oldAPY && entry.newAPY && (
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="text-xs text-muted-foreground">
                             APY: {entry.oldAPY.toFixed(2)}% → {entry.newAPY.toFixed(2)}%
                           </div>
+                        )}
+                        {entry.transactionHash && (
+                          <ArbiscanButton 
+                            txHash={entry.transactionHash}
+                            size="sm"
+                            variant="outline"
+                          />
                         )}
                       </div>
                     </div>

@@ -66,7 +66,9 @@ export async function POST(request: NextRequest) {
       gasUsed: gasUsed || 0,
       protocolAddress: protocolAddress || undefined,
       oldAPY: oldAPY || undefined,
-      newAPY: newAPY || undefined
+      newAPY: newAPY || undefined,
+      timestamp: new Date(),
+      read: false
     })
 
     return NextResponse.json({

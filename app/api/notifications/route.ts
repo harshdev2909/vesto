@@ -67,7 +67,9 @@ export async function POST(request: NextRequest) {
       walletAddress,
       message,
       type,
-      data
+      data,
+      timestamp: new Date(),
+      read: false
     })
 
     return NextResponse.json({

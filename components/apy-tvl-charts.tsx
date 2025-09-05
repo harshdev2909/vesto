@@ -191,7 +191,7 @@ export function APYTVLCharts() {
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">{comparison.protocolName}</h4>
                     <Badge variant={index === 0 ? "default" : "outline"}>
-                      {(parseFloat(comparison.apyFormatted) * 100).toFixed(2)}% APY
+                      {parseFloat(comparison.apyFormatted).toFixed(2)}% APY
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">

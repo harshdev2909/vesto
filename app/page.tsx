@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ConnectWalletButton } from "@/components/connect-wallet-button"
 import { MintUSDCButton } from "@/components/mint-usdc-button"
 import { ArrowRight } from "lucide-react"
-import { SiteHeader } from "@/components/site-header"
+
 import { DashboardV2 } from "@/components/dashboard-v2"
 import { useAccount } from "wagmi"
 
@@ -17,7 +17,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <SiteHeader />
       <main className="flex-1">
         {isConnected ? (
           <div className="px-6 py-8 space-y-6 max-w-6xl mx-auto">
@@ -85,7 +84,7 @@ export default function HomePage() {
             >
               <Card>
                 <CardContent className="p-6">
-                  <div className="text-2xl mb-2">🚀</div>
+                  <div className="text-2xl mb-2"></div>
                   <h3 className="text-lg font-semibold mb-2">Auto-Rebalancing</h3>
                   <p className="text-muted-foreground">
                     Automatically move your funds to the highest yielding protocols using Chainlink Keepers.
@@ -94,7 +93,7 @@ export default function HomePage() {
               </Card>
               <Card>
                 <CardContent className="p-6">
-                  <div className="text-2xl mb-2">📊</div>
+                  <div className="text-2xl mb-2"></div>
                   <h3 className="text-lg font-semibold mb-2">Real-time Data</h3>
                   <p className="text-muted-foreground">
                     All data is fetched directly from smart contracts in real-time with React Query.
@@ -103,7 +102,7 @@ export default function HomePage() {
               </Card>
               <Card>
                 <CardContent className="p-6">
-                  <div className="text-2xl mb-2">🔒</div>
+                  <div className="text-2xl mb-2"></div>
                   <h3 className="text-lg font-semibold mb-2">Secure & Transparent</h3>
                   <p className="text-muted-foreground">
                     Your funds are secured by audited smart contracts on Arbitrum.
@@ -124,7 +123,7 @@ export default function HomePage() {
                   <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
                     <div className="text-center">
                       <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">1️⃣</span>
+                        <span className="text-2xl">1️</span>
                       </div>
                       <h3 className="font-semibold mb-2">Deposit Assets</h3>
                       <p className="text-sm text-muted-foreground">
@@ -133,7 +132,7 @@ export default function HomePage() {
                     </div>
                     <div className="text-center">
                       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">2️⃣</span>
+                        <span className="text-2xl">2️</span>
                       </div>
                       <h3 className="font-semibold mb-2">Auto-Route</h3>
                       <p className="text-sm text-muted-foreground">
@@ -142,7 +141,7 @@ export default function HomePage() {
                     </div>
                     <div className="text-center">
                       <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">3️⃣</span>
+                        <span className="text-2xl">3️</span>
                       </div>
                       <h3 className="font-semibold mb-2">Earn & Rebalance</h3>
                       <p className="text-sm text-muted-foreground">

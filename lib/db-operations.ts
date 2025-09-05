@@ -51,6 +51,27 @@ export async function markNotificationAsRead(notificationId: string, walletAddre
   return result.modifiedCount > 0
 }
 
+export async function updateNotificationByTransactionHash(
+  transactionHash: string,
+  walletAddress: string,
+  updates: Partial<Notification>
+): Promise<boolean> {
+  const collection = await getCollection<Notification>('notifications')
+  const result = await collection.updateOne(
+    { 
+      transactionHash: transactionHash,
+      walletAddress: walletAddress.toLowerCase()
+    },
+    { 
+      $set: { 
+        ...updates,
+        updatedAt: new Date()
+      }
+    }
+  )
+  return result.modifiedCount > 0
+}
+
 export async function markAllNotificationsAsRead(walletAddress: string): Promise<number> {
   const collection = await getCollection<Notification>('notifications')
   const result = await collection.updateMany(
@@ -70,7 +91,7 @@ export async function markAllNotificationsAsRead(walletAddress: string): Promise
 
 // History operations
 export async function createHistoryEntry(entry: Omit<HistoryEntry, '_id' | 'createdAt' | 'updatedAt'>): Promise<HistoryEntry> {
-  const collection = await getCollection<HistoryEntry>('history')
+  const collection = await getCollection<HistoryEntry>('user_transactions')
   const now = new Date()
   const newEntry: HistoryEntry = {
     ...entry,
@@ -87,10 +108,31 @@ export async function createHistoryEntry(entry: Omit<HistoryEntry, '_id' | 'crea
 }
 
 export async function getHistoryEntries(walletAddress: string): Promise<HistoryEntry[]> {
-  const collection = await getCollection<HistoryEntry>('history')
+  const collection = await getCollection<HistoryEntry>('user_transactions')
   return collection.find({ 
     walletAddress: walletAddress.toLowerCase() 
   }).sort({ timestamp: -1 }).toArray()
+}
+
+export async function updateTransactionStatus(
+  transactionHash: string, 
+  walletAddress: string, 
+  updates: Partial<HistoryEntry>
+): Promise<boolean> {
+  const collection = await getCollection<HistoryEntry>('user_transactions')
+  const result = await collection.updateOne(
+    { 
+      transactionHash: transactionHash,
+      walletAddress: walletAddress.toLowerCase()
+    },
+    { 
+      $set: { 
+        ...updates,
+        updatedAt: new Date()
+      }
+    }
+  )
+  return result.modifiedCount > 0
 }
 
 // User operations

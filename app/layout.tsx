@@ -10,11 +10,11 @@ import { Toaster } from "@/components/ui/toaster"
 import { WalletProvider } from "@/providers/wallet-provider"
 import { QueryProvider } from "@/providers/query-provider"
 import { SiteFooter } from "@/components/site-footer"
+import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {
   title: "Vesto — Yield Aggregator",
-  description: "Deposit once, earn the best yield automatically.",
-  generator: "v0.app",
+  description: "Deposit once, earn the best yield automatically."
 }
 
 export default function RootLayout({
@@ -31,10 +31,13 @@ export default function RootLayout({
         <Suspense fallback={<div>Loading...</div>}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <QueryProvider>
-              <WalletProvider>{children}</WalletProvider>
+              <WalletProvider>
+                <SiteHeader/>
+                {children}
+                <SiteFooter />
+              </WalletProvider>
             </QueryProvider>
             <Toaster />
-            <SiteFooter />
           </ThemeProvider>
         </Suspense>
         <Analytics />

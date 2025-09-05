@@ -22,8 +22,10 @@ import { WithdrawFormV3 } from './withdraw-form-v3'
 import { ManualRebalancePanel } from './manual-rebalance-panel'
 import { APYTVLCharts } from './apy-tvl-charts'
 import { NotificationBell } from './notification-bell'
+import { ArbiscanButton } from './arbiscan-button'
 import { useSupportedAssets, useReceiptBalance, useNextRebalanceCandidate, useBestYield, useTokenBalance, useTransactionHistory } from '@/hooks/useOnChainData'
 import { useVaultData } from '@/hooks/useVaultData'
+import { useCurrentProtocol } from '@/hooks/useCurrentProtocol'
 import { useAppStore } from '@/store/use-app-store'
 
 export function DashboardV2() {
@@ -41,6 +43,18 @@ export function DashboardV2() {
   const primaryAsset = supportedAssets?.[0]
   const { data: bestYield, isLoading: yieldLoading } = useBestYield(primaryAsset || '')
   const { data: tokenBalance, isLoading: tokenBalanceLoading } = useTokenBalance(address || '', primaryAsset || '')
+  
+  // Get current protocol using the new hook
+  const { data: currentProtocol, isLoading: protocolLoading, error: protocolError } = useCurrentProtocol(primaryAsset || '', address || '')
+  
+  // Debug logging
+  console.log('🔍 Dashboard debug:', {
+    primaryAsset,
+    address,
+    currentProtocol,
+    protocolLoading,
+    protocolError
+  })
   
   // Vault data for platform-specific information
   const { vaultData, isLoading: vaultLoading, error: vaultError } = useVaultData()
@@ -91,7 +105,7 @@ export function DashboardV2() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Vesto Dashboard</h1>
             <p className="text-muted-foreground">
@@ -105,7 +119,7 @@ export function DashboardV2() {
               Connected
             </Badge>
           </div>
-        </div>
+        </div> */}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -144,7 +158,7 @@ export function DashboardV2() {
                   <p className="text-sm font-medium text-muted-foreground">Next Rebalance</p>
                   <p className="text-2xl font-bold">
                     {candidateLoading ? '...' : 
-                     nextCandidate?.timeUntilUpkeep === 0n ? 'Ready' : 
+                     nextCandidate?.timeUntilUpkeep === BigInt(0) ? 'Ready' : 
                      nextCandidate?.timeUntilUpkeep ? `${Math.floor(Number(nextCandidate.timeUntilUpkeep) / 3600)}h` : 'N/A'}
                   </p>
                 </div>
@@ -293,7 +307,7 @@ export function DashboardV2() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-green-600">
-                    {vaultLoading ? '...' : vaultData?.currentVault?.apyPercentage ? `${(vaultData.currentVault.apyPercentage * 100).toFixed(4)}%` : 'N/A'}
+                    {vaultLoading ? '...' : vaultData?.currentVault?.apyPercentage ? `${vaultData.currentVault.apyPercentage.toFixed(4)}%` : 'N/A'}
                   </div>
                   {vaultData?.currentVault?.protocolName && (
                     <p className="text-sm text-muted-foreground mt-2">
@@ -311,11 +325,21 @@ export function DashboardV2() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {vaultLoading ? '...' : vaultData?.currentVault?.protocolName || 'N/A'}
+                    {protocolLoading ? '...' : 
+                     protocolError ? 'Error' :
+                     currentProtocol?.protocolAddress ? 
+                       (currentProtocol.protocolAddress === '0xD3F54aE03Af9E6e90b82786547B16834Dc236aA6' ? 'Mock Aave' :
+                        currentProtocol.protocolAddress === '0x4DB93bC6Ddc0D74d91f2d2c072087f19A47aA1a8' ? 'Mock Compound' :
+                        'Unknown Protocol') : 'N/A'}
                   </div>
-                  {vaultData?.currentVault?.protocol && (
+                  {protocolError && (
+                    <p className="text-sm text-red-500 mt-2">
+                      Error: {protocolError.message}
+                    </p>
+                  )}
+                  {currentProtocol?.protocolAddress && currentProtocol.protocolAddress !== '0x0000000000000000000000000000000000000000' && (
                     <Badge variant="secondary" className="mt-2">
-                      {vaultData.currentVault.protocol.slice(0, 6)}...{vaultData.currentVault.protocol.slice(-4)}
+                      {currentProtocol.protocolAddress.slice(0, 6)}...{currentProtocol.protocolAddress.slice(-4)}
                     </Badge>
                   )}
                 </CardContent>
@@ -367,7 +391,7 @@ export function DashboardV2() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {historyEntries?.slice(0, 5).map((entry) => (
+                    {historyEntries?.slice(0, 5).map((entry: any) => (
                       <div
                         key={entry._id}
                         className="flex items-center justify-between p-3 bg-muted rounded-lg"
@@ -387,14 +411,17 @@ export function DashboardV2() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-1">
                           <p className="text-sm text-muted-foreground">
                             {new Date(entry.timestamp).toLocaleDateString()}
                           </p>
                           {entry.transactionHash && (
-                            <p className="text-xs text-muted-foreground font-mono">
-                              {entry.transactionHash.slice(0, 8)}...
-                            </p>
+                            <ArbiscanButton 
+                              txHash={entry.transactionHash}
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-xs"
+                            />
                           )}
                         </div>
                       </div>

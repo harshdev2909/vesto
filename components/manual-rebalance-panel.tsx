@@ -126,8 +126,8 @@ export function ManualRebalancePanel({ onSuccess }: ManualRebalancePanelProps) {
               <div className="flex items-center justify-between">
                 <span className="text-sm">Time until upkeep:</span>
                 <span className="text-sm font-medium">
-                  {nextCandidate.timeUntilUpkeep > 0 
-                    ? `${Math.floor(nextCandidate.timeUntilUpkeep / 3600)}h ${Math.floor((nextCandidate.timeUntilUpkeep % 3600) / 60)}m`
+                  {Number(nextCandidate.timeUntilUpkeep) > 0 
+                    ? `${Math.floor(Number(nextCandidate.timeUntilUpkeep) / 3600)}h ${Math.floor((Number(nextCandidate.timeUntilUpkeep) % 3600) / 60)}m`
                     : 'Ready now'
                   }
                 </span>

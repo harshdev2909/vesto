@@ -51,6 +51,27 @@ export const YIELD_ROUTER_ABI = [
   },
   {
     "inputs": [
+      { "name": "asset", "type": "address" }
+    ],
+    "name": "assetPositions",
+    "outputs": [
+      {
+        "components": [
+          { "name": "asset", "type": "address" },
+          { "name": "totalDeposited", "type": "uint256" },
+          { "name": "currentProtocol", "type": "address" },
+          { "name": "protocolShares", "type": "uint256" },
+          { "name": "lastRebalance", "type": "uint256" }
+        ],
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "name": "asset", "type": "address" },
       { "name": "amount", "type": "uint256" }
     ],

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi"
 import { toast } from "sonner"
-import { SiteHeader } from "@/components/site-header"
+
 import { useSmartContractDashboard } from "@/hooks/useSmartContractDashboard"
 
 export default function AdminPage() {
@@ -84,7 +84,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <SiteHeader />
       <main className="flex-1 px-6 py-8 space-y-6 max-w-4xl mx-auto">
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold">Admin Panel</h1>

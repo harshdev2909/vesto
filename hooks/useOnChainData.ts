@@ -52,7 +52,7 @@ export function useUserAssetShares(userAddress: string, assetAddress: string) {
   return useQuery({
     queryKey: queryKeys.userAssetShares(userAddress, assetAddress),
     queryFn: async () => {
-      const shares = await yieldRouter.read.getUserAssetShares([userAddress, assetAddress])
+      const shares = await yieldRouter.read.getUserAssetShares([userAddress as `0x${string}`, assetAddress as `0x${string}`])
       return shares
     },
     enabled: !!userAddress && !!assetAddress,
@@ -66,7 +66,7 @@ export function useReceiptBalance(userAddress: string) {
   return useQuery({
     queryKey: queryKeys.receiptBalance(userAddress),
     queryFn: async () => {
-      const balance = await receiptToken.read.balanceOf([userAddress])
+      const balance = await receiptToken.read.balanceOf([userAddress as `0x${string}`])
       const decimals = await receiptToken.read.decimals()
       return {
         balance,
@@ -84,12 +84,12 @@ export function useBestYield(assetAddress: string) {
   return useQuery({
     queryKey: queryKeys.bestYield(assetAddress),
     queryFn: async () => {
-      const [protocol, apy, protocolName] = await yieldAggregator.read.getBestYield([assetAddress])
+      const [protocol, apy, protocolName] = await yieldAggregator.read.getBestYield([assetAddress as `0x${string}`])
       return {
         protocol,
         apy,
         protocolName,
-        apyFormatted: formatUnits(apy, 18) // APY is stored with 18 decimals
+        apyFormatted: (Number(apy) / 1e15).toFixed(4) // APY is stored with 1e15 multiplier (4500000000000000 = 4.5%)
       }
     },
     enabled: !!assetAddress,
@@ -103,10 +103,10 @@ export function useAssetYield(protocolAddress: string, assetAddress: string) {
   return useQuery({
     queryKey: queryKeys.assetYield(protocolAddress, assetAddress),
     queryFn: async () => {
-      const yieldData = await yieldAggregator.read.getAssetYield([protocolAddress, assetAddress])
+      const yieldData = await yieldAggregator.read.getAssetYield([protocolAddress as `0x${string}`, assetAddress as `0x${string}`])
       return {
         ...yieldData,
-        apyFormatted: formatUnits(yieldData.apy, 18),
+        apyFormatted: (Number(yieldData.apy) / 1e15).toFixed(4),
         tvlFormatted: formatUnits(yieldData.totalValueLocked, 18)
       }
     },
@@ -121,10 +121,10 @@ export function useCompareYields(assetAddress: string) {
   return useQuery({
     queryKey: queryKeys.compareYields(assetAddress),
     queryFn: async () => {
-      const comparisons = await yieldAggregator.read.compareYields([assetAddress])
+      const comparisons = await yieldAggregator.read.compareYields([assetAddress as `0x${string}`])
       return comparisons.map(comp => ({
         ...comp,
-        apyFormatted: formatUnits(comp.apy, 18),
+        apyFormatted: (Number(comp.apy) / 1e15).toFixed(4),
         tvlFormatted: formatUnits(comp.totalValueLocked, 18)
       }))
     },
@@ -147,8 +147,8 @@ export function useNextRebalanceCandidate() {
         currentAPY,
         bestAPY,
         improvement,
-        currentAPYFormatted: formatUnits(currentAPY, 18),
-        bestAPYFormatted: formatUnits(bestAPY, 18),
+        currentAPYFormatted: (Number(currentAPY) / 1e12).toFixed(4),
+        bestAPYFormatted: (Number(bestAPY) / 1e12).toFixed(4),
         improvementBps: Number(improvement) / 100 // Convert to basis points
       }
     },
@@ -164,7 +164,7 @@ export function useTokenBalance(userAddress: string, tokenAddress: string) {
     queryFn: async () => {
       const tokenContract = createERC20Contract(tokenAddress as `0x${string}`)
       const [balance, decimals] = await Promise.all([
-        tokenContract.read.balanceOf([userAddress]),
+        tokenContract.read.balanceOf([userAddress as `0x${string}`]),
         tokenContract.read.decimals()
       ])
       return {
@@ -185,7 +185,7 @@ export function useTokenAllowance(userAddress: string, tokenAddress: string, spe
     queryFn: async () => {
       const tokenContract = createERC20Contract(tokenAddress as `0x${string}`)
       const [allowance, decimals] = await Promise.all([
-        tokenContract.read.allowance([userAddress, spenderAddress]),
+        tokenContract.read.allowance([userAddress as `0x${string}`, spenderAddress as `0x${string}`]),
         tokenContract.read.decimals()
       ])
       return {
@@ -292,6 +292,78 @@ export function useCreateNotification() {
       
       if (!response.ok) {
         throw new Error('Failed to create notification')
+      }
+      
+      return response.json()
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch notifications
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications(variables.walletAddress)
+      })
+    }
+  })
+}
+
+// Hook to update transaction status
+export function useUpdateTransactionStatus() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (updateData: {
+      transactionHash: string
+      walletAddress: string
+      updates: {
+        blockNumber?: number
+        gasUsed?: number
+        protocolAddress?: string
+        oldAPY?: number
+        newAPY?: number
+      }
+    }) => {
+      const response = await fetch('/api/history/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to update transaction status')
+      }
+      
+      return response.json()
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch history
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.history(variables.walletAddress)
+      })
+    }
+  })
+}
+
+// Hook to update notification by transaction hash
+export function useUpdateNotificationByTransactionHash() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (updateData: {
+      transactionHash: string
+      walletAddress: string
+      updates: {
+        message?: string
+        type?: 'info' | 'success' | 'warning' | 'error'
+        data?: any
+      }
+    }) => {
+      const response = await fetch('/api/notifications/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to update notification')
       }
       
       return response.json()
