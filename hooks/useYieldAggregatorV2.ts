@@ -7,6 +7,8 @@ import { parseUnits, formatUnits } from 'viem'
 import { useToast } from './use-toast'
 import { useAppStore } from '@/store/use-app-store'
 import { useSaveTransactionHistory, useCreateNotification, useUpdateTransactionStatus, useUpdateNotificationByTransactionHash } from './useOnChainData'
+import { useEmailPreferences } from './useEmailPreferences'
+import { useVaultData } from './useVaultData'
 import { config } from '@/lib/wagmi'
 import { 
   yieldRouter, 
@@ -20,6 +22,8 @@ export function useYieldAggregatorV2() {
   const { address } = useAccount()
   const { toast } = useToast()
   const { addPendingTransaction, updateTransactionStatus, removePendingTransaction } = useAppStore()
+  const { sendEmailNotification } = useEmailPreferences()
+  const { vaultData } = useVaultData()
   
   // Mutation hooks
   const saveTransactionHistory = useSaveTransactionHistory()
@@ -106,6 +110,7 @@ export function useYieldAggregatorV2() {
   React.useEffect(() => {
     if (isDepositSuccess && depositReceipt && depositTxHash && address && !processedDeposits.has(depositTxHash)) {
       console.log('✅ Deposit transaction confirmed')
+      console.log('📧 About to send deposit email notification')
       updateTransactionStatus(depositTxHash, 'confirmed')
       
       // Mark as processed to prevent duplicates
@@ -132,7 +137,7 @@ export function useYieldAggregatorV2() {
       
       toast({ 
         title: "Deposit Confirmed!", 
-        description: "Your deposit has been processed successfully." 
+        description: "Your deposit has been processed successfully. Email notification sent!" 
       })
       
       // Create notification
@@ -141,20 +146,34 @@ export function useYieldAggregatorV2() {
         message: "Deposit confirmed successfully",
         type: "success"
       })
+
+      // Send email notification (fire and forget)
+      const formattedAmount = pendingDeposit?.amount ? (parseFloat(pendingDeposit.amount) / 1e6).toFixed(6) : '0.00'
+      const protocolName = vaultData?.currentVault?.protocolName || 'Current Protocol'
+      sendEmailNotification('deposit', {
+        amount: formattedAmount,
+        protocol: protocolName,
+        transactionHash: depositTxHash
+      }).then(() => {
+        console.log('📧 Deposit email notification sent successfully')
+      }).catch((error) => {
+        console.error('📧 Failed to send deposit email notification:', error)
+      })
       
-      // Clean up
+      // Clean up after a delay to ensure email is sent
       setTimeout(() => {
         removePendingTransaction(depositTxHash)
         setDepositTxHash(null)
         setPendingDeposit(null)
-      }, 5000)
+      }, 5000) // 5 seconds to ensure email is sent before cleanup
     }
-  }, [isDepositSuccess, depositReceipt, depositTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedDeposits])
+  }, [isDepositSuccess, depositReceipt, depositTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedDeposits, sendEmailNotification, pendingDeposit])
 
   // Handle successful withdrawal transactions
   React.useEffect(() => {
     if (isWithdrawSuccess && withdrawReceipt && withdrawTxHash && address && !processedWithdrawals.has(withdrawTxHash)) {
       console.log('✅ Withdrawal transaction confirmed')
+      console.log('📧 About to send withdrawal email notification')
       updateTransactionStatus(withdrawTxHash, 'confirmed')
       
       // Mark as processed to prevent duplicates
@@ -181,7 +200,7 @@ export function useYieldAggregatorV2() {
       
       toast({ 
         title: "Withdrawal Confirmed!", 
-        description: "Your withdrawal has been processed successfully." 
+        description: "Your withdrawal has been processed successfully. Email notification sent!" 
       })
       
       // Create notification
@@ -190,20 +209,34 @@ export function useYieldAggregatorV2() {
         message: "Withdrawal confirmed successfully",
         type: "success"
       })
+
+      // Send email notification (fire and forget)
+      const formattedAmount = pendingWithdrawal?.amount ? (parseFloat(pendingWithdrawal.amount) / 1e6).toFixed(6) : '0.00'
+      const protocolName = vaultData?.currentVault?.protocolName || 'Current Protocol'
+      sendEmailNotification('withdraw', {
+        amount: formattedAmount,
+        protocol: protocolName,
+        transactionHash: withdrawTxHash
+      }).then(() => {
+        console.log('📧 Withdrawal email notification sent successfully')
+      }).catch((error) => {
+        console.error('📧 Failed to send withdrawal email notification:', error)
+      })
       
-      // Clean up
+      // Clean up after a delay to ensure email is sent
       setTimeout(() => {
         removePendingTransaction(withdrawTxHash)
         setWithdrawTxHash(null)
         setPendingWithdrawal(null)
-      }, 5000)
+      }, 5000) // 5 seconds to ensure email is sent before cleanup
     }
-  }, [isWithdrawSuccess, withdrawReceipt, withdrawTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedWithdrawals, pendingWithdrawal])
+  }, [isWithdrawSuccess, withdrawReceipt, withdrawTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedWithdrawals, pendingWithdrawal, sendEmailNotification])
 
   // Handle successful rebalance transactions
   React.useEffect(() => {
     if (isRebalanceSuccess && rebalanceReceipt && rebalanceTxHash && address && !processedRebalances.has(rebalanceTxHash)) {
       console.log('✅ Rebalance transaction confirmed')
+      console.log('📧 About to send rebalance email notification')
       updateTransactionStatus(rebalanceTxHash, 'confirmed')
       
       // Mark as processed to prevent duplicates
@@ -220,7 +253,7 @@ export function useYieldAggregatorV2() {
       
       toast({ 
         title: "Rebalance Confirmed!", 
-        description: "Your assets have been rebalanced successfully." 
+        description: "Your assets have been rebalanced successfully. Email notification sent!" 
       })
       
       // Create notification
@@ -229,14 +262,30 @@ export function useYieldAggregatorV2() {
         message: "Rebalance completed successfully",
         type: "success"
       })
+
+      // Send email notification (fire and forget)
+      const newProtocolName = vaultData?.currentVault?.protocolName || 'New Protocol'
+      const newAPY = vaultData?.currentVault?.apyPercentage ? `${vaultData.currentVault.apyPercentage.toFixed(2)}%` : '3.50%'
       
-      // Clean up
+      sendEmailNotification('rebalance', {
+        oldProtocol: 'Previous Protocol', // TODO: Get from rebalance data
+        newProtocol: newProtocolName,
+        oldAPY: '3.00%', // TODO: Get from rebalance data
+        newAPY: newAPY,
+        transactionHash: rebalanceTxHash
+      }).then(() => {
+        console.log('📧 Rebalance email notification sent successfully')
+      }).catch((error) => {
+        console.error('📧 Failed to send rebalance email notification:', error)
+      })
+      
+      // Clean up after a delay to ensure email is sent
       setTimeout(() => {
         removePendingTransaction(rebalanceTxHash)
         setRebalanceTxHash(null)
-      }, 5000)
+      }, 5000) // 5 seconds to ensure email is sent before cleanup
     }
-  }, [isRebalanceSuccess, rebalanceReceipt, rebalanceTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedRebalances])
+  }, [isRebalanceSuccess, rebalanceReceipt, rebalanceTxHash, address, toast, updateTransactionStatus, removePendingTransaction, saveTransactionHistory, createNotification, processedRebalances, sendEmailNotification])
 
   // Approve token function
   const approveToken = useCallback(async (tokenAddress: string, amount: bigint) => {

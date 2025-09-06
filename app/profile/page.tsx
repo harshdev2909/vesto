@@ -13,6 +13,7 @@ import { Loader2, User, Mail, Wallet, Calendar, AlertCircle, CheckCircle } from 
 import { useAppStore } from '@/store/use-app-store'
 import { useTransactionHistory } from '@/hooks/useOnChainData'
 import { formatDistanceToNow } from 'date-fns'
+import { EmailSettings } from '@/components/email-settings'
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount()
@@ -299,6 +300,9 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Email Settings */}
+        <EmailSettings />
       </div>
     </div>
   )

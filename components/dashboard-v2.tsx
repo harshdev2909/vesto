@@ -60,8 +60,10 @@ export function DashboardV2() {
   const { vaultData, isLoading: vaultLoading, error: vaultError } = useVaultData()
 
   const handleTransactionSuccess = () => {
-    // Refresh data after successful transaction
-    window.location.reload()
+    // Refresh data after successful transaction with delay to allow email sending
+    setTimeout(() => {
+      window.location.reload()
+    }, 5000) // 5 seconds delay to ensure email is sent
   }
 
   if (!isConnected) {

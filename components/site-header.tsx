@@ -13,7 +13,7 @@ const nav = [
   { href: "/", label: "Home" },
   { href: "/history", label: "History" },
   { href: "/profile", label: "Profile" },
-  
+  { href: "/hyperzone", label: "HyperZone" },
   { href: "/about", label: "About" },
 ]
 
