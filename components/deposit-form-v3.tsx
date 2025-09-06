@@ -30,7 +30,7 @@ export function DepositFormV3({ onSuccess }: DepositFormV3Props) {
   const [allowanceError, setAllowanceError] = useState<string>('')
   
   // Hooks
-  const { depositWithApproval, isDepositing, isApproving } = useYieldAggregatorV2()
+  const { approveToken, deposit, depositWithApproval, isDepositing, isApproving } = useYieldAggregatorV2()
   const { data: supportedAssets, isLoading: assetsLoading } = useSupportedAssets()
   const { data: bestYield, isLoading: yieldLoading } = useBestYield(selectedAsset)
   const { data: tokenBalance, isLoading: balanceLoading, refetch: refetchBalance } = useTokenBalance(address || '', selectedAsset)
@@ -50,9 +50,6 @@ export function DepositFormV3({ onSuccess }: DepositFormV3Props) {
   // Validate balance and allowance
   useEffect(() => {
     if (amount && selectedAsset && tokenBalance && tokenAllowance) {
-      setBalanceError('')
-      setAllowanceError('')
-      
       try {
         const amountBigInt = parseUnits(amount, 6) // Assuming 6 decimals for USDC
         const balanceBigInt = parseUnits(tokenBalance.formatted, 6)
@@ -61,6 +58,8 @@ export function DepositFormV3({ onSuccess }: DepositFormV3Props) {
         // Check balance
         if (amountBigInt > balanceBigInt) {
           setBalanceError(`Insufficient balance. You have ${tokenBalance.formatted} tokens.`)
+        } else {
+          setBalanceError('')
         }
         
         // Check allowance
@@ -68,15 +67,42 @@ export function DepositFormV3({ onSuccess }: DepositFormV3Props) {
           // The depositWithApproval function approves 10x the amount, so show that in the message
           const approvalAmount = amountBigInt * BigInt(10)
           setAllowanceError(`Insufficient allowance. You need to approve ${formatUnits(approvalAmount, 6)} tokens (10x the deposit amount for future transactions).`)
+        } else {
+          setAllowanceError('')
         }
       } catch (error) {
         console.error('Error validating amount:', error)
         setBalanceError('Invalid amount format')
+        setAllowanceError('')
       }
+    } else {
+      // Clear errors when no amount or asset selected
+      setBalanceError('')
+      setAllowanceError('')
     }
   }, [amount, selectedAsset, tokenBalance, tokenAllowance])
 
   // Deposit preview is now handled by the usePreviewDeposit hook
+
+  const handleApprove = async () => {
+    if (!address || !selectedAsset || !amount) {
+      return
+    }
+
+    try {
+      const amountBigInt = parseUnits(amount, 6) // Assuming 6 decimals
+      // Approve 10x the amount for future transactions
+      const approvalAmount = amountBigInt * BigInt(10)
+      const success = await approveToken(selectedAsset, approvalAmount)
+      
+      if (success) {
+        // Refetch allowance after successful approval
+        refetchAllowance()
+      }
+    } catch (error) {
+      console.error('Approval error:', error)
+    }
+  }
 
   const handleDeposit = async () => {
     if (!address || !selectedAsset || !amount) {
@@ -89,7 +115,7 @@ export function DepositFormV3({ onSuccess }: DepositFormV3Props) {
 
     try {
       const amountBigInt = parseUnits(amount, 6) // Assuming 6 decimals
-      const success = await depositWithApproval(selectedAsset, amountBigInt, 6)
+      const success = await deposit(selectedAsset, amountBigInt)
       
       if (success && onSuccess) {
         onSuccess()
@@ -125,7 +151,8 @@ export function DepositFormV3({ onSuccess }: DepositFormV3Props) {
   }
 
   const isApprovalNeeded = tokenAllowance && parseFloat(tokenAllowance.formatted) < parseFloat(amount || '0')
-  const canDeposit = address && selectedAsset && amount && parseFloat(amount) > 0 && !isDepositing && !isApproving && !balanceError && !allowanceError
+  const canApprove = address && selectedAsset && amount && parseFloat(amount) > 0 && !isApproving && !balanceError
+  const canDeposit = address && selectedAsset && amount && parseFloat(amount) > 0 && !isDepositing && !isApproving && !balanceError && !allowanceError && !isApprovalNeeded
   const isLoading = assetsLoading || yieldLoading || balanceLoading || allowanceLoading || previewLoading
 
   if (!address) {
@@ -287,17 +314,28 @@ export function DepositFormV3({ onSuccess }: DepositFormV3Props) {
           </div>
         )}
 
-        {/* Deposit Button */}
-        <Button
-          onClick={handleDeposit}
-          disabled={!canDeposit}
-          className="w-full"
-          size="lg"
-        >
-          {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isDepositing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isApproving ? 'Approving...' : isDepositing ? 'Depositing...' : 'Deposit'}
-        </Button>
+        {/* Action Buttons */}
+        {isApprovalNeeded ? (
+          <Button
+            onClick={handleApprove}
+            disabled={!canApprove}
+            className="w-full"
+            size="lg"
+          >
+            {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isApproving ? 'Approving...' : 'Allow'}
+          </Button>
+        ) : (
+          <Button
+            onClick={handleDeposit}
+            disabled={!canDeposit}
+            className="w-full"
+            size="lg"
+          >
+            {isDepositing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isDepositing ? 'Depositing...' : 'Deposit'}
+          </Button>
+        )}
 
         {/* User Info */}
         {user.email && (
