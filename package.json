@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "vesto",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -52,6 +52,7 @@
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.5.1",
+    "ethers": "^6.15.0",
     "framer-motion": "latest",
     "geist": "latest",
     "immer": "latest",
