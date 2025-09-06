@@ -1,11 +1,16 @@
 import nodemailer from 'nodemailer'
 
+// Validate email environment variables
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  console.warn('⚠️  Email credentials not found in environment variables. Email functionality will be disabled.')
+}
+
 // Email configuration
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: "harshsharmaa990@gmail.com",
-    pass: "gncqwoyeibggmjxz",
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 })
 
@@ -17,9 +22,15 @@ export interface EmailData {
 }
 
 export async function sendEmail({ to, subject, html, text }: EmailData) {
+  // Check if email credentials are configured
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('Email credentials not configured. Skipping email send.')
+    return { success: false, error: 'Email credentials not configured' }
+  }
+
   try {
     const mailOptions = {
-      from: '"Vesto Yield Aggregator" <harshsharmaa990@gmail.com>',
+      from: process.env.EMAIL_FROM || '"Vesto Yield Aggregator" <noreply@vesto.com>',
       to,
       subject,
       html,
