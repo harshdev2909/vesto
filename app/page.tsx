@@ -10,6 +10,8 @@ import { MintUSDCButton } from "@/components/mint-usdc-button"
 import { ArrowRight } from "lucide-react"
 
 import { DashboardV2 } from "@/components/dashboard-v2"
+import { ProtocolsShowcase } from "@/components/protocols-showcase"
+import { SimulationMode } from "@/components/simulation-mode"
 import { useAccount } from "wagmi"
 
 export default function HomePage() {
@@ -153,11 +155,29 @@ export default function HomePage() {
               </Card>
             </motion.div>
 
-            {/* Call to Action */}
+            {/* Protocols Showcase */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
+            >
+              <ProtocolsShowcase />
+            </motion.div>
+
+            {/* Simulation Mode */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.0 }}
+            >
+              <SimulationMode />
+            </motion.div>
+
+            {/* Call to Action */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.2 }}
               className="text-center"
             >
               <Card>
