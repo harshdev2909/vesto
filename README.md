@@ -348,28 +348,7 @@ Ensure all required environment variables are set in production:
 - **Performance Monitoring**: Real-time performance metrics
 - **User Journey**: Complete user flow analysis
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## ⚠️ Disclaimer
-
-This software is for educational and testing purposes. Use at your own risk. The authors are not responsible for any financial losses.
-
-## 🆘 Support
-
-For questions or issues:
-- Open a GitHub issue
-- Check the component files for usage examples
-- Review the API routes for implementation details
 
 ---
 
